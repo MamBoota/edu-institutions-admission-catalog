@@ -1,14 +1,63 @@
+version: '3.8'
+
 services:
+  # 1. База данных PostgreSQL
   db:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
+    container_name: edu_db
+    restart: always
     environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
-      POSTGRES_DB: edu_catalog
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-securepassword}
+      POSTGRES_DB: ${DB_NAME:-edu_catalog}
     volumes:
-      - edu_pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - edu-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Бэкенд (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: edu_backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-securepassword}@db:5432/${DB_NAME:-edu_catalog}
+      SECRET_KEY: ${SECRET_KEY:-supersecretkeychangeinprod}
+      ALLOWED_HOSTS: "*" # Для продакшена лучше указать конкретный домен/IP
+    networks:
+      - edu-network
+    expose:
+      - "8000"
+
+  # 3. Фронтенд (Nginx для раздачи статики React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE=http://localhost:8000 # Замените на http://твой-ip:8000 или домен при деплое
+    container_name: edu_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - edu-network
 
 volumes:
-  edu_pgdata:
+  pgdata:
+
+networks:
+  edu-network:
+    driver: bridge
