@@ -1,0 +1,61 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+' Актеры
+actor "Гость\n(Неавторизованный)" as Guest
+actor "Пользователь\n(User)" as User
+actor "Администратор\n(Admin)" as Admin
+
+' Система
+rectangle "Система 'Каталог образовательных учреждений'" {
+
+  ' Сценарии авторизации (доступны всем)
+  usecase "Вход в систему" as UC_Login
+  usecase "Регистрация" as UC_Register
+
+  ' Сценарии Пользователя
+  usecase "Просмотр каталога учреждений" as UC_Catalog
+  usecase "Поиск и фильтрация\n(по городу, предпочтениям)" as UC_Filter
+  usecase "Просмотр рейтинга и отзывов" as UC_Reviews
+  usecase "Управление профилем\n(ФИО, возраст, город)" as UC_Profile
+  usecase "Добавить в избранное" as UC_FavAdd
+  usecase "Удалить из избранного" as UC_FavRemove
+  usecase "Оставить отзыв" as UC_ReviewAdd
+
+  ' Сценарии Администратора
+  usecase "Управление учреждениями\n(CRUD)" as UC_AdminInst
+  usecase "Управление пользователями" as UC_AdminUsers
+  usecase "Модерация отзывов" as UC_AdminMod
+}
+
+' Связи Гостя
+Guest --> UC_Login
+Guest --> UC_Register
+
+' Связи Пользователя (наследует вход + свои функции)
+User --> UC_Login
+User --> UC_Catalog
+User --> UC_Filter
+User --> UC_Reviews
+User --> UC_Profile
+User --> UC_FavAdd
+User --> UC_FavRemove
+User --> UC_ReviewAdd
+
+' Связи Администратора (наследует всё + админка)
+Admin --> UC_Login
+Admin --> UC_Catalog
+Admin --> UC_AdminInst
+Admin --> UC_AdminUsers
+Admin --> UC_AdminMod
+Admin --> UC_AdminMod
+
+' Включения и расширения (детализация)
+UC_Catalog ..> UC_Filter : включает
+UC_Catalog ..> UC_Reviews : включает
+UC_FavAdd ..> UC_Catalog : расширяет
+UC_FavRemove ..> UC_Profile : расширяет
+UC_ReviewAdd ..> UC_Reviews : расширяет
+
+@enduml
