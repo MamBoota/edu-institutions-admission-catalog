@@ -1,0 +1,93 @@
+@startuml
+' Настройки стиля для красоты
+skinparam packageStyle rectangle
+skinparam linetype ortho
+hide circle
+
+' === ТАБЛИЦЫ (СУЩНОСТИ) ===
+
+entity "users" as U {
+  *id : Integer [PK]
+  --
+  email : String [Unique]
+  password_hash : String
+  role : String [Enum: user, admin]
+  created_at : DateTime
+}
+
+entity "profiles" as P {
+  *id : Integer [PK]
+  *user_id : Integer [FK]
+  --
+  full_name : String
+  age : Integer
+  city_id : Integer [FK]
+}
+
+entity "cities" as C {
+  *id : Integer [PK]
+  --
+  name : String
+}
+
+entity "institutions" as I {
+  *id : Integer [PK]
+  *city_id : Integer [FK]
+  --
+  name : String
+  description : Text
+  address : String
+}
+
+entity "reviews" as R {
+  *id : Integer [PK]
+  *user_id : Integer [FK]
+  *institution_id : Integer [FK]
+  --
+  rating : Integer
+  comment : Text
+  created_at : DateTime
+}
+
+entity "favorites" as F {
+  *user_id : Integer [PK, FK]
+  *institution_id : Integer [PK, FK]
+  --
+  created_at : DateTime
+}
+
+entity "preferences" as PR {
+  *user_id : Integer [PK, FK]
+  --
+  preferred_city_id : Integer [FK]
+  preferred_direction : String
+}
+
+' === СВЯЗИ ===
+
+' Пользователь -> Профиль (1 к 1)
+U ||--|| P : "has one"
+
+' Профиль -> Город (Многие к 1)
+P }|--|| C : "lives in"
+
+' Учреждение -> Город (Многие к 1)
+I }|--|| C : "located in"
+
+' Пользователь -> Отзывы (1 ко Многим)
+U ||--o{ R : "writes"
+
+' Учреждение -> Отзывы (1 ко Многим)
+I ||--o{ R : "receives"
+
+' Пользователь <-> Учреждения (Избранное, Многие ко Многим)
+U ||--o{ F : "adds to"
+I ||--o{ F : "added by"
+
+' Пользователь -> Предпочтения (1 к 1)
+U ||--|| PR : "has settings"
+
+' Предпочтения -> Город (Многие к 1)
+PR }|--|| C : "prefers city"
+
+@enduml
