@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: edu_catalog
+    ports:
+      - "5432:5432"
+    volumes:
+      - edu_pgdata:/var/lib/postgresql/data
+
+volumes:
+  edu_pgdata:
