@@ -7,57 +7,50 @@ services:
     container_name: edu_db
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-securepassword}
-      POSTGRES_DB: ${DB_NAME:-edu_catalog}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
-      - edu-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - app-network
 
   # 2. Бэкенд (FastAPI)
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    build: ./backend
     container_name: edu_backend
     restart: always
-    depends_on:
-      db:
-        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     environment:
-      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-securepassword}@db:5432/${DB_NAME:-edu_catalog}
-      SECRET_KEY: ${SECRET_KEY:-supersecretkeychangeinprod}
-      ALLOWED_HOSTS: "*" # Для продакшена лучше указать конкретный домен/IP
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      SECRET_KEY: ${SECRET_KEY}
+    depends_on:
+      - db
     networks:
-      - edu-network
+      - app-network
     expose:
       - "8000"
 
-  # 3. Фронтенд (Nginx для раздачи статики React)
+  # 3. Фронтенд (React + Nginx)
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_BASE=http://localhost:8000 # Замените на http://твой-ip:8000 или домен при деплое
+    build: ./frontend
     container_name: edu_frontend
     restart: always
     ports:
-      - "80:80"
+      - "80:80"   # Порт 80 для доступа по домену
+      - "443:443" # Порт 443 для HTTPS (если подключишь сертификат позже)
     depends_on:
       - backend
     networks:
-      - edu-network
+      - app-network
 
 volumes:
   pgdata:
 
 networks:
-  edu-network:
+  app-network:
     driver: bridge
