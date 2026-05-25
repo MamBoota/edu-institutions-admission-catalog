@@ -33,6 +33,7 @@ dev-frontend:
 	cd frontend && npm run dev
 
 build:
+	@node -e "const m=+process.version.slice(1).split('.')[0]; if(m<18){console.error('\nNode '+process.version+' на сервере — слишком старый для Vite (нужен 18+).\nСоберите фронт на Mac: make install-frontend && make build\nЗатем залейте frontend/dist/ и deploy/api.php через Менеджер файлов.\n');process.exit(1)}"
 	cd frontend && (test -d node_modules || npm install) && npm run build
 
 prod-check:

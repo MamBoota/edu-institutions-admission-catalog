@@ -42,30 +42,21 @@ curl -s http://127.0.0.1:8000/api/health
 
 ## Шаг 2. Менеджер файлов — api.php и фронт
 
-### 2.1. Собрать фронт
+### 2.1. Собрать фронт — **только на Mac**, не на server109
 
-**Проще — на своём Mac** (на shared-хостинге часто старый Node или мало памяти):
+На shared-хостинге Node **~10** — Vite не запустится (`SyntaxError: Unexpected token {`).
+**`make build` на сервере не нужен и не получится.**
+
+**На Mac** (Терминал):
 
 ```bash
-cd edu-institutions-admission-catalog
+cd путь/к/edu-institutions-admission-catalog
 git pull
 make install-frontend
 make build
 ```
 
-Затем через **Менеджер файлов** залейте содержимое `frontend/dist/` и `deploy/api.php` в корень сайта.
-
-**Или на сервере** (Shell-клиент), если есть Node:
-
-```bash
-cd ~/edu-institutions-admission-catalog
-git pull
-node --version    # нужен 18+, иначе собирайте на Mac
-make install-frontend
-make build
-```
-
-Если `vite: команда не найдена` — сначала `make install-frontend`.
+После этого на Mac появится папка **`frontend/dist/`** с `index.html` и `assets/`.
 
 ### 2.2. Узнать папку сайта
 
