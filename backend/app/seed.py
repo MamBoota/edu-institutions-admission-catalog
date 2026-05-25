@@ -1,4 +1,6 @@
 """Initial data for empty database."""
+from __future__ import annotations
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 

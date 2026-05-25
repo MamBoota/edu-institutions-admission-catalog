@@ -1,7 +1,7 @@
 .PHONY: install-backend install-frontend preflight start stop db-up db-down db-bootstrap dev-backend dev-frontend build prod-check
 
 install-backend:
-	cd backend && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+	@bash scripts/install-backend.sh
 
 install-frontend:
 	cd frontend && npm install
