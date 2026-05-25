@@ -33,7 +33,7 @@ dev-frontend:
 	cd frontend && npm run dev
 
 build:
-	cd frontend && npm run build
+	cd frontend && (test -d node_modules || npm install) && npm run build
 
 prod-check:
 	@bash scripts/prod-check.sh
