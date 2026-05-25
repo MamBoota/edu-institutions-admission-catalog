@@ -1,10 +1,18 @@
-# Положите в корень сайта myproj76.ru как файл .htaccess
-# (рядом с index.html и api.php). Нужен для передачи Authorization в PHP.
+# Корень сайта myproj76.ru → сохранить как .htaccess (рядом с index.html и api.php)
 
+# Authorization для api.php (нужен для входа в аккаунт)
 SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
+
+# Authorization → api.php
 RewriteCond %{HTTP:Authorization} ^(.+)
 RewriteRule ^api\.php - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# React SPA: /login, /register, /catalog и т.д. → index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/api\.php
+RewriteRule ^ index.html [L]
 </IfModule>
