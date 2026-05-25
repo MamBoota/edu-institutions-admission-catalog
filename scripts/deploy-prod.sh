@@ -37,34 +37,31 @@ make db-bootstrap
 echo "== Frontend: production build =="
 make build
 
-echo "== Копирование dist → $WEB_ROOT =="
+echo "== Копирование dist + api.php → $WEB_ROOT =="
 mkdir -p "$WEB_ROOT"
 rsync -a --delete frontend/dist/ "$WEB_ROOT/"
+cp deploy/api.php "$WEB_ROOT/api.php"
 
-echo "== Перезапуск API ($SERVICE_NAME) =="
+echo "== Запуск API =="
 if systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
   sudo systemctl restart "$SERVICE_NAME"
   sudo systemctl status "$SERVICE_NAME" --no-pager -l || true
-elif command -v systemctl >/dev/null 2>&1; then
-  echo "Сервис $SERVICE_NAME не найден. Установите unit из deploy/uvicorn-edu-catalog.service.example" >&2
-  echo "  sudo cp deploy/uvicorn-edu-catalog.service.example /etc/systemd/system/${SERVICE_NAME}.service" >&2
-  echo "  sudo systemctl daemon-reload && sudo systemctl enable --now $SERVICE_NAME" >&2
 else
-  echo "systemctl недоступен — запустите Uvicorn вручную:" >&2
-  echo "  cd backend && . .venv/bin/activate && uvicorn app.main:app --host 127.0.0.1 --port 8000" >&2
+  bash "$ROOT/scripts/start-api-shared.sh"
 fi
 
 echo ""
-echo "== Локальная проверка API на сервере =="
+echo "== Локальная проверка API =="
 if curl -sfS --max-time 5 http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
   curl -sS http://127.0.0.1:8000/api/health
   echo ""
 else
-  echo "✗ Uvicorn не отвечает на :8000 — проверьте systemd и backend/.env" >&2
+  echo "✗ Uvicorn не отвечает на :8000" >&2
   exit 1
 fi
 
 echo ""
-echo "== Дальше =="
-echo "1. В ISPmanager добавьте deploy/ispmanager-nginx-snippet.conf в «Дополнительные директives nginx»"
-echo "2. С вашего ПК: make prod-check"
+echo "== Проверка PHP-прокси (если api.php уже в WEB_ROOT) =="
+if [[ -f "$WEB_ROOT/api.php" ]]; then
+  echo "api.php скопирован. Снаружи: curl -s https://myproj76.ru/api.php/api/health"
+fi

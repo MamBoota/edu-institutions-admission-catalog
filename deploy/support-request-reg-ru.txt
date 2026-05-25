@@ -1,0 +1,38 @@
+# Запрос в поддержку REG.RU (ISPmanager, shared-хостинг)
+#
+# Откройте в панели: «Письмо в поддержку» и отправьте текст ниже.
+# Замените u3499900 на свой логин, если другой.
+
+Тема: Настроить проксирование /api на Python (Uvicorn) для myproj76.ru
+
+Здравствуйте!
+
+На аккаунте u3499900, домен myproj76.ru, развёрнуто SPA-приложение.
+Бэкенд (FastAPI/Uvicorn) слушает http://127.0.0.1:8000 на этом же сервере.
+
+Сейчас запросы к https://myproj76.ru/api/* отдают index.html вместо JSON.
+Нужно добавить в конфигурацию nginx для myproj76.ru проксирование:
+
+location ^~ /api/ {
+    proxy_pass http://127.0.0.1:8000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+location = /api {
+    return 301 /api/;
+}
+
+В панели ISPmanager у сайта myproj76.ru нет поля «Дополнительные директивы nginx»
+(режим PHP: FastCGI Apache).
+
+Прошу добавить эти директивы на вашей стороне или подсказать,
+где их можно указать в панели для моего тарифа.
+
+Проверка после настройки: curl -s https://myproj76.ru/api/health
+должен вернуть {"status":"ok"}
+
+Спасибо!

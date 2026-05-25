@@ -8,6 +8,8 @@ export default function RegisterPage() {
   const { register } = useAuth()
   const navigate = useNavigate()
   const [cities, setCities] = useState([])
+  const [citiesError, setCitiesError] = useState('')
+  const [citiesLoading, setCitiesLoading] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -17,9 +19,20 @@ export default function RegisterPage() {
   const [touched, setTouched] = useState(false)
 
   useEffect(() => {
+    setCitiesLoading(true)
+    setCitiesError('')
     apiFetch('/api/public/cities')
-      .then(setCities)
-      .catch(() => setCities([]))
+      .then((list) => {
+        setCities(Array.isArray(list) ? list : [])
+        if (!Array.isArray(list) || list.length === 0) {
+          setCitiesError('Список городов пуст — выполните make db-bootstrap на сервере.')
+        }
+      })
+      .catch((err) => {
+        setCities([])
+        setCitiesError(String(err.message || err))
+      })
+      .finally(() => setCitiesLoading(false))
   }, [])
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -75,8 +88,14 @@ export default function RegisterPage() {
 
         <label>
           Город (профиль)
-          <select value={cityId} onChange={(e) => setCityId(e.target.value)}>
-            <option value="">Не выбран</option>
+          <select
+            value={cityId}
+            onChange={(e) => setCityId(e.target.value)}
+            disabled={citiesLoading || cities.length === 0}
+          >
+            <option value="">
+              {citiesLoading ? 'Загрузка…' : cities.length ? 'Не выбран' : 'Нет городов'}
+            </option>
             {cities.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -84,6 +103,7 @@ export default function RegisterPage() {
             ))}
           </select>
         </label>
+        {citiesError ? <p className="error">{citiesError}</p> : null}
 
         <label>
           Email

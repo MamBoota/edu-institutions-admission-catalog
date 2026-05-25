@@ -35,6 +35,9 @@ export function AuthProvider({ children }) {
         method: 'POST',
         json: { email, password },
       })
+      if (!data?.access_token) {
+        throw new Error('Сервер не вернул токен — проверьте API (/api/auth/login).')
+      }
       setToken(data.access_token)
       await refresh()
     },
@@ -47,6 +50,9 @@ export function AuthProvider({ children }) {
         method: 'POST',
         json: payload,
       })
+      if (!data?.access_token) {
+        throw new Error('Сервер не вернул токен — проверьте API (/api/auth/register).')
+      }
       setToken(data.access_token)
       await refresh()
     },

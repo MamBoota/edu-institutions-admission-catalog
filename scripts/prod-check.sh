@@ -3,12 +3,13 @@
 set -euo pipefail
 
 BASE="${PROD_URL:-https://myproj76.ru}"
+API_PREFIX="${PROD_API_PREFIX:-/api.php}"
 FAIL=0
 
 check_json() {
   local path="$1"
   local expect="$2"
-  local url="${BASE}${path}"
+  local url="${BASE}${API_PREFIX}${path}"
   echo "→ GET $url"
   local body code ctype
   body="$(curl -fsS --max-time 20 "$url" 2>&1)" && code=200 || code=$?
@@ -22,7 +23,7 @@ check_json() {
   if [[ "$ctype" != *"json"* ]]; then
     echo "  ✗ Ожидался JSON, получен Content-Type: $ctype"
     echo "$body" | head -3
-    echo "  Подсказка: Nginx не проксирует /api — см. deploy/ispmanager-nginx-snippet.conf"
+    echo "  Подсказка: на shared REG.RU нужны api.php + Uvicorn — см. docs/shared-hosting-reg-ru.md"
     FAIL=1
     return
   fi

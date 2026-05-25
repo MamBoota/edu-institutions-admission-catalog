@@ -150,6 +150,34 @@ h2 {
   background: var(--surface);
 }
 
+.demo-accounts {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.demo-accounts ul {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.demo-accounts li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.demo-accounts li button:not(.linkish) {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+}
+
 .form {
   display: flex;
   flex-direction: column;

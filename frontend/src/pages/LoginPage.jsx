@@ -3,6 +3,11 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import PasswordField from '../components/PasswordField'
 
+const DEMO_ACCOUNTS = [
+  { label: 'Админ', email: 'admin@edu.example', password: 'Admin12345' },
+  { label: 'Пользователь', email: 'user@edu.example', password: 'User12345' },
+]
+
 export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -25,6 +30,26 @@ export default function LoginPage() {
     if (!canSubmit) return
     try {
       await login(email.trim(), password)
+      navigate(from, { replace: true })
+    } catch (err) {
+      setError(String(err.message || err))
+    }
+  }
+
+  function fillDemo(account) {
+    setEmail(account.email)
+    setPassword(account.password)
+    setError('')
+    setTouched(false)
+  }
+
+  async function loginDemo(account) {
+    setEmail(account.email)
+    setPassword(account.password)
+    setError('')
+    setTouched(true)
+    try {
+      await login(account.email, account.password)
       navigate(from, { replace: true })
     } catch (err) {
       setError(String(err.message || err))
@@ -70,6 +95,25 @@ export default function LoginPage() {
           Войти
         </button>
       </form>
+
+      <div className="demo-accounts">
+        <p className="muted">Демо-аккаунты (нужен работающий API и сиды в БД):</p>
+        <ul>
+          {DEMO_ACCOUNTS.map((acc) => (
+            <li key={acc.email}>
+              <span>
+                <strong>{acc.label}:</strong> {acc.email}
+              </span>
+              <button type="button" className="linkish" onClick={() => fillDemo(acc)}>
+                Подставить
+              </button>
+              <button type="button" onClick={() => loginDemo(acc)}>
+                Войти
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   )
 }
