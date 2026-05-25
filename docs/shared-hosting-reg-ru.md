@@ -115,14 +115,56 @@ curl -s https://myproj76.ru/api.php/api/health
 
 ## Шаг 4. CRON — чтобы API не «засыпал»
 
-**Планировщик CRON** в панели → новая задача:
+Если сервер перезагрузится или Uvicorn упадёт — сайт перестанет логинить. CRON раз в 5 минут проверяет и поднимает API.
+
+### 4.1. Узнайте путь к проекту (Shell-клиент)
+
+```bash
+cd ~/edu-institutions-admission-catalog && pwd
+```
+
+У вас скорее всего:
+
+`/var/www/u3499900/data/edu-institutions-admission-catalog`
+
+### 4.2. Планировщик CRON в панели
+
+1. Левое меню → **«Планировщик CRON»**
+2. **«Создать»** / **«Добавить задачу»**
+3. Заполните:
 
 | Поле | Значение |
 |------|----------|
-| Команда | `bash ~/edu-institutions-admission-catalog/scripts/start-api-shared.sh` |
-| Период | каждые 5–10 минут |
+| **Минуты** | `*/5` (каждые 5 минут) |
+| **Часы** | `*` |
+| **День месяца** | `*` |
+| **Месяц** | `*` |
+| **День недели** | `*` |
+| **Команда** | см. ниже |
 
-Скрипт не запустит второй экземпляр, если API уже работает.
+**Команда** (подставьте свой путь из шага 4.1):
+
+```bash
+bash /var/www/u3499900/data/edu-institutions-admission-catalog/scripts/start-api-shared.sh >> /var/www/u3499900/data/cron-api.log 2>&1
+```
+
+4. **Сохранить**
+
+> В некоторых версиях ISPmanager одно поле «Расписание» — тогда вставьте строку целиком из **`deploy/cron-reg-ru.example`**.
+
+### 4.3. Проверка
+
+Подождите 5 минут или в Shell-клиенте запустите команду из CRON вручную:
+
+```bash
+bash /var/www/u3499900/data/edu-institutions-admission-catalog/scripts/start-api-shared.sh
+```
+
+Должно быть: `OK: Uvicorn запущен` или `API уже работает`.
+
+Лог CRON: **Менеджер файлов** → `cron-api.log` в домашней папке (`data/`).
+
+Скрипт **не создаёт второй** Uvicorn, если API уже отвечает на `:8000`.
 
 ---
 

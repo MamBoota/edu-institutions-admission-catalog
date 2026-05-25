@@ -1,0 +1,14 @@
+# CRON для REG.RU (ISPmanager → Планировщик CRON)
+#
+# Скрипт поднимает Uvicorn, если он упал. Если API уже работает — ничего не делает.
+# Путь к проекту на server109 (проверьте в Shell: pwd внутри репозитория):
+
+*/5 * * * * bash /var/www/u3499900/data/edu-institutions-admission-catalog/scripts/start-api-shared.sh >> /var/www/u3499900/data/cron-api.log 2>&1
+
+# Расшифровка:
+# */5 * * * *  — каждые 5 минут
+# bash .../start-api-shared.sh  — проверка и запуск API
+# >> cron-api.log  — лог (можно смотреть в Менеджере файлов)
+
+# Альтернатива — каждые 10 минут:
+# */10 * * * * bash /var/www/u3499900/data/edu-institutions-admission-catalog/scripts/start-api-shared.sh >> /var/www/u3499900/data/cron-api.log 2>&1
