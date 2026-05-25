@@ -1,9 +1,16 @@
-# Пример systemd для Uvicorn (положить в /etc/systemd/system/, поправить пути и пользователя).
-# Путь к проекту: /var/www/edu-catalog/repo (или свой).
+# systemd unit для Uvicorn. Установка на сервере:
+#
+#   sudo cp deploy/uvicorn-edu-catalog.service.example /etc/systemd/system/edu-catalog-api.service
+#   sudo nano /etc/systemd/system/edu-catalog-api.service   # поправьте User, пути
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now edu-catalog-api
+#   sudo systemctl status edu-catalog-api
+#
+# Логи: journalctl -u edu-catalog-api -f
 
 [Unit]
-Description=Edu catalog API (FastAPI)
-After=network.target mysql.service
+Description=Edu catalog API (FastAPI / Uvicorn)
+After=network.target
 
 [Service]
 Type=simple

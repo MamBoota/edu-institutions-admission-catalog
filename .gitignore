@@ -87,6 +87,7 @@ coverage/
 .DS_Store
 Thumbs.db
 *.log
+.dev/
 
 # Optional npm cache directory
 .npm

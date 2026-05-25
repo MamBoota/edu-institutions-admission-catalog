@@ -64,12 +64,75 @@ CORS_ORIGINS=https://myproj76.ru,https://www.myproj76.ru
 - В панели REG.RU / у регистратора: **A-запись** `@` и при необходимости `www` → **IP** той машины, где открыт сайт (IP хостинга или VPS).
 - TLS (HTTPS) — по инструкции REG.RU (Let’s Encrypt в панели и т.д.).
 
-Фронт в проде: `npm run build`, раздача статики через **Nginx** (или то, что даёт хостинг) + прокси `/api` на Uvicorn — детали зависят от того, **где** ты решишь крутить бэкенд (тот же сервер или VPS).
+Фронт в проде: `npm run build`, раздача статики через **Nginx** + прокси `/api` на Uvicorn.
 
-## 5. Файлы в репозитории
+### 4.1. Nginx: прокси `/api` (обязательно)
+
+Сейчас на [myproj76.ru](https://myproj76.ru/) открывается фронт, но запросы к `/api/*` отдают HTML вместо JSON — **Nginx не проксирует API на Uvicorn**.
+
+**ISPmanager (REG.RU shared):**
+
+1. **Сайты** → **myproj76.ru** → **Изменить** (или «Nginx» / «Конфигурация»).
+2. Поле **«Дополнительные директивы nginx»** — вставьте содержимое файла [`deploy/ispmanager-nginx-snippet.conf`](../deploy/ispmanager-nginx-snippet.conf).
+3. Сохраните и дождитесь перезагрузки Nginx.
+
+**VPS / свой Nginx:** полный vhost — [`deploy/nginx-myproj76.conf.example`](../deploy/nginx-myproj76.conf.example).
+
+### 4.2. Uvicorn (systemd)
+
+1. Склонируйте репозиторий на сервер, например в `/var/www/edu-catalog/repo`.
+2. Создайте `backend/.env` (см. §3).
+3. Установите unit:
+   ```bash
+   sudo cp deploy/uvicorn-edu-catalog.service.example /etc/systemd/system/edu-catalog-api.service
+   sudo nano /etc/systemd/system/edu-catalog-api.service   # User, пути к repo и .venv
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now edu-catalog-api
+   ```
+4. Проверка **на сервере**:
+   ```bash
+   curl -s http://127.0.0.1:8000/api/health
+   # {"status":"ok"}
+   ```
+
+### 4.3. Деплой одной командой (на сервере по SSH)
+
+```bash
+git pull
+export WEB_ROOT=/var/www/ВАШ_ЛОГИН/data/www/myproj76.ru   # каталог сайта из ISPmanager
+bash scripts/deploy-prod.sh
+```
+
+`WEB_ROOT` — каталог, куда уже залит фронт (там лежит `index.html`).
+
+### 4.4. Проверка с вашего ПК
+
+```bash
+make prod-check
+# или: bash scripts/prod-check.sh
+```
+
+Ожидается:
+```bash
+curl -s https://myproj76.ru/api/health
+{"status":"ok"}
+```
+
+## 5. Диагностика
+
+| Симптом | Причина | Решение |
+|---------|---------|---------|
+| `/api/health` возвращает HTML страницы входа | Nginx отдаёт SPA вместо прокси | §4.1 — snippet для nginx |
+| `curl 127.0.0.1:8000/api/health` на сервере не работает | Uvicorn не запущен / ошибка `.env` | `systemctl status edu-catalog-api`, `journalctl -u edu-catalog-api -n 50` |
+| 502 на `/api/*` | Uvicorn упал или порт не 8000 | Проверить systemd, MySQL в `.env` |
+| 1045 MySQL | Неверный пароль или хост | §3, bootstrap только **по SSH** с `localhost` |
+| CORS в браузере | Нет origin в `CORS_ORIGINS` | Добавить `https://myproj76.ru` в `backend/.env` |
+
+## 6. Файлы в репозитории
 
 - Драйвер: **`pymysql`** в `backend/requirements.txt`.
 - Пример переменных: `backend/.env.example`.
 - Инициализация БД: **`make db-bootstrap`** → `backend/scripts/bootstrap_db.py`.
 - DDL для отчёта УП.11 под MySQL: `sql/01_schema_mysql.sql`.
-- Примеры веб-сервера и сервиса API: **`deploy/nginx-myproj76.conf.example`**, **`deploy/uvicorn-edu-catalog.service.example`** (пути поправь под свой сервер).
+- Примеры веб-сервера и сервиса API: **`deploy/nginx-myproj76.conf.example`**, **`deploy/ispmanager-nginx-snippet.conf`**, **`deploy/uvicorn-edu-catalog.service.example`**.
+- Скрипты: **`scripts/deploy-prod.sh`** (деплой на сервере), **`scripts/prod-check.sh`** (проверка с ПК).

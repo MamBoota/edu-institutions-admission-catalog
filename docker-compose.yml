@@ -1,56 +1,19 @@
-version: '3.8'
+# Локальный PostgreSQL для разработки (make db-up).
+# Переменные совпадают с примером DATABASE_URL в README и backend/.env.example.
 
 services:
-  # 1. База данных PostgreSQL
   db:
     image: postgres:15-alpine
     container_name: edu_db
-    restart: always
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: edu_catalog
     volumes:
       - pgdata:/var/lib/postgresql/data
-    networks:
-      - app-network
-
-  # 2. Бэкенд (FastAPI)
-  backend:
-    build: ./backend
-    container_name: edu_backend
-    restart: always
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      SECRET_KEY: ${SECRET_KEY}
-    depends_on:
-      - db
-    networks:
-      - app-network
-    expose:
-      - "8000"
-
-  # 3. Фронтенд (React + Nginx)
-  frontend:
-    build: ./frontend
-    container_name: edu_frontend
-    restart: always
-    ports:
-      - "80:80"   # Порт 80 для доступа по домену
-      - "443:443" # Порт 443 для HTTPS (если подключишь сертификат позже)
-    depends_on:
-      - backend
-    networks:
-      - app-network
 
 volumes:
   pgdata:
-
-networks:
-  app-network:
-    driver: bridge
