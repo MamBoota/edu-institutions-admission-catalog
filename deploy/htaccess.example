@@ -1,0 +1,10 @@
+# Положите в корень сайта myproj76.ru как файл .htaccess
+# (рядом с index.html и api.php). Нужен для передачи Authorization в PHP.
+
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} ^(.+)
+RewriteRule ^api\.php - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>

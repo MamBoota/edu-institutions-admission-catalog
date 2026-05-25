@@ -1,14 +1,52 @@
 <?php
 /**
  * PHP-прокси к FastAPI (Uvicorn) на shared-хостинге REG.RU.
- * Nginx не пускает /api на Python, но .php-файлы обрабатывает Apache.
- *
- * Положите в корень сайта (рядом с index.html).
- * Фронт: VITE_API_BASE=/api.php  →  запрос /api/health идёт на /api.php/api/health
+ * Положите в корень сайта вместе с deploy/htaccess.example → .htaccess
  */
 declare(strict_types=1);
 
 $backend = 'http://127.0.0.1:8000';
+
+/** Apache FastCGI часто «съедает» Authorization — собираем из всех источников. */
+function collect_incoming_headers(): array
+{
+    $headers = [];
+
+    if (function_exists('getallheaders')) {
+        foreach (getallheaders() as $name => $value) {
+            $headers[strtolower((string) $name)] = (string) $value;
+        }
+    }
+
+    if (function_exists('apache_request_headers')) {
+        foreach (apache_request_headers() as $name => $value) {
+            $lower = strtolower((string) $name);
+            if (!isset($headers[$lower])) {
+                $headers[$lower] = (string) $value;
+            }
+        }
+    }
+
+    foreach ($_SERVER as $key => $value) {
+        if (!is_string($value)) {
+            continue;
+        }
+        if (str_starts_with($key, 'HTTP_')) {
+            $name = strtolower(str_replace('_', '-', substr($key, 5)));
+            if (!isset($headers[$name])) {
+                $headers[$name] = $value;
+            }
+        }
+    }
+
+    foreach (['HTTP_AUTHORIZATION', 'REDIRECT_HTTP_AUTHORIZATION'] as $key) {
+        if (!empty($_SERVER[$key]) && empty($headers['authorization'])) {
+            $headers['authorization'] = (string) $_SERVER[$key];
+        }
+    }
+
+    return $headers;
+}
 
 $uri = $_SERVER['REQUEST_URI'] ?? '/';
 $prefix = '/api.php';
@@ -26,15 +64,15 @@ $target = $backend . $path;
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $body = file_get_contents('php://input');
 
+$incoming = collect_incoming_headers();
+$skip = ['host', 'connection', 'content-length', 'accept-encoding'];
+
 $forward = [];
-if (function_exists('getallheaders')) {
-    foreach (getallheaders() as $name => $value) {
-        $lower = strtolower((string) $name);
-        if (in_array($lower, ['host', 'connection', 'content-length', 'accept-encoding'], true)) {
-            continue;
-        }
-        $forward[] = $name . ': ' . $value;
+foreach ($incoming as $name => $value) {
+    if (in_array($name, $skip, true)) {
+        continue;
     }
+    $forward[] = implode('-', array_map('ucfirst', explode('-', $name))) . ': ' . $value;
 }
 
 $ch = curl_init($target);

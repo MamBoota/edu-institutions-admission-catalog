@@ -41,6 +41,10 @@ echo "== Копирование dist + api.php → $WEB_ROOT =="
 mkdir -p "$WEB_ROOT"
 rsync -a --delete frontend/dist/ "$WEB_ROOT/"
 cp deploy/api.php "$WEB_ROOT/api.php"
+if [[ ! -f "$WEB_ROOT/.htaccess" ]] || ! grep -q HTTP_AUTHORIZATION "$WEB_ROOT/.htaccess" 2>/dev/null; then
+  cp deploy/htaccess.example "$WEB_ROOT/.htaccess"
+  echo "Скопирован $WEB_ROOT/.htaccess (Authorization для api.php)"
+fi
 
 echo "== Запуск API =="
 if systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then

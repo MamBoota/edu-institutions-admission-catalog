@@ -74,7 +74,9 @@ cp ~/edu-institutions-admission-catalog/deploy/api.php ~/www/myproj76.ru/api.php
 
 ### 2.4. Или через Менеджер файлов вручную
 
-1. Загрузите файл **`deploy/api.php`** из репозитория в **корень сайта** (рядом с `index.html`).
+1. Загрузите в **корень сайта** (рядом с `index.html`):
+   - **`deploy/api.php`**
+   - **`deploy/htaccess.example`** → сохраните как **`.htaccess`** (с точкой! нужен для входа в аккаунт)
 2. Замените `index.html` и папку `assets/` содержимым из `frontend/dist/` после `make build`.
 
 ---
