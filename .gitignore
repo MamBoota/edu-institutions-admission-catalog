@@ -65,6 +65,8 @@ coverage.xml
 *.swp
 *.swo
 *~
+.gigacode/
+repomix-output.xml
 
 # --- Node.js / React / Frontend ---
 # Dependencies
